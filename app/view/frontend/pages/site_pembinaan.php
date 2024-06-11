@@ -1,4 +1,4 @@
-<?= $this->render('frontend' . DS . 'components' . DS . 'titlebox') ?>
+<?= $this->render('frontend/components/titlebox') ?>
 <div class="container mb-5">
     <h3 class="text-primary mb-3">DAFTAR PERMINTAAN PEMBINAAN SAYA</h3>
     <div class="card mb-5">

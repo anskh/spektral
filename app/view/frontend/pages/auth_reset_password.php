@@ -1,4 +1,4 @@
-<?= $this->render('frontend' . DS . 'components' . DS . 'titlebox') ?>
+<?= $this->render('frontend/components/titlebox') ?>
 <div class="container mb-5">
     <h3 class="mb-3 text-primary font-weight-bold">Reset Password</h3>
     <?php $form = create_form($model); ?>

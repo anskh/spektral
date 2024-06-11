@@ -1,4 +1,4 @@
-<?= $this->render('frontend' . DS . 'components' . DS . 'titlebox') ?>
+<?= $this->render('frontend/components/titlebox') ?>
 <div class="container mb-5">
     <div class="mb-3">
         <ul class="nav nav-tabs">

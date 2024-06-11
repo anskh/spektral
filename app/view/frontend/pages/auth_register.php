@@ -1,4 +1,4 @@
-<?= $this->render('frontend' . DS . 'components' . DS . 'titlebox') ?>
+<?= $this->render('frontend/components/titlebox') ?>
 <div class="container my-3 mb-5">
     <?php $form = create_form($model); ?>
     <?= $form->begin(route('register'), 'POST', ['class' => 'needs-validation', 'autocomplete' => 'off']) ?>

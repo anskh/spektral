@@ -25,7 +25,7 @@ if (!function_exists('view')) {
     {
         $renderer = make(ViewRenderer::class, ['args' => [config('path.view')]]);
         $renderer->setParam('content', $content);
-        $response->getBody()->write($renderer->render('template' . DS . $template, $params));
+        $response->getBody()->write($renderer->render('template/' . $template, $params));
 
         return $response;
     }

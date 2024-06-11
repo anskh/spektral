@@ -5,14 +5,13 @@ declare(strict_types=1);
 use Corephp\Db\MigrationContainer;
 use Corephp\Helper\Config;
 
-defined('DS') or define('DS', DIRECTORY_SEPARATOR);
 defined('ROOT') or define('ROOT', __DIR__);
 
 if(getcwd() !== ROOT){
     chdir(ROOT);
 }
 
-require ROOT . DS . 'vendor' . DS . 'autoload.php';
+require ROOT . '/vendor/autoload.php';
 
 Dotenv\Dotenv::createImmutable(ROOT)->load();
 
@@ -38,7 +37,7 @@ if (!in_array($action, ['up', 'down', 'seed'], true)) {
 }
 
 // init config
-Config::init('app' . DS . 'config');
+Config::init('app/config');
 
 // build migration
 $container = make(MigrationContainer::class, ['args' => [$action]]);

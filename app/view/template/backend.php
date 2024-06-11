@@ -23,17 +23,17 @@
 
 <body class="d-flex flex-column h-100">
     <header>
-        <?= $this->render('backend' . DS . 'components' . DS . 'header') ?>
+        <?= $this->render('backend/components/header') ?>
     </header>
     <?php if (isset($breadcrumbs)) { ?>
-        <?= $this->render('backend' . DS . 'components' . DS . 'breadcrumb') ?>
+        <?= $this->render('backend/components/breadcrumb') ?>
     <?php
     } ?>
     <main role="main" class="flex-shrink-0">
-        <?= $this->render('backend' . DS . 'pages' . DS . $content) ?>
+        <?= $this->render('backend/pages/' . $content) ?>
     </main>
     <footer class="footer mt-auto py-3 text-muted">
-        <?= $this->render('backend' . DS . 'components' . DS . 'footer') ?>
+        <?= $this->render('backend/components/footer') ?>
     </footer>
     <button onclick="topFunction()" id="topBtn" title="Kembali ke atas">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
