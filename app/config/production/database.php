@@ -8,8 +8,8 @@ return [
             'name' => 'default',
             'prefix' => 'dbo_',
             'dsn' => 'mysql:host=localhost;dbname=spektral;',
-            'username' => 'root',
-            'password' => '',
+            'username' => 'xxx',
+            'password' => 'xxx',
             'options' => [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
