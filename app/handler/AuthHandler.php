@@ -405,9 +405,7 @@ class AuthHandler extends ActionHandler
     private function getSSOProvider(): Keycloak
     {
         $redirectUri = base_url(route('login_sso'));
-        if (CORE_ENVIRONMENT === 'production') {
-            $redirectUri = 'https://spektral.web.bps.go.id/auth/login-sso';
-        }
+
         return new Keycloak([
             'authServerUrl'         => 'https://sso.bps.go.id',
             'realm'                 => 'pegawai-bps',
