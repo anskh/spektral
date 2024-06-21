@@ -425,8 +425,8 @@ class AuthHandler extends ActionHandler
         return new Keycloak([
             'authServerUrl'         => 'https://sso.bps.go.id',
             'realm'                 => 'pegawai-bps',
-            'clientId'              => '11400-spektral-p0s',
-            'clientSecret'          => 'f03f924e-9f3e-4ab8-b3a3-f8ac906f2e80',
+            'clientId'              => 'xxxxx',
+            'clientSecret'          => 'xxxxx',
             'redirectUri'           => base_url(route('login_sso'))
         ]);
     }
