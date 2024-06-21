@@ -35,9 +35,5 @@
             <span class="text-muted">Jabatan</span>
             <div><?= $row['jabatan'] ?></div>
         </div>
-        <div class="col-lg-4 col-sm-6">
-            <span class="text-muted">Status</span>
-            <div><?= $row['is_active'] === 1 ? 'Aktif' : 'Tidak Aktif' ?></div>
-        </div>
     </div>
 </div>

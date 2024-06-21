@@ -1,6 +1,6 @@
 <div class="container">
-    <div id="carouselSlides" class="carousel slide mb-5" data-bs-ride="carousel">
-        <div class="carousel-inner">
+    <div id="carouselSlides" class="carousel slide mt-5" data-bs-ride="carousel">
+        <div class="carousel-inner py-5">
             <div class="carousel-item active">
                 <img src="<?= base_path('/img/slide-1.png') ?>" class="d-block w-100" alt="slide-1">
             </div>

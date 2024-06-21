@@ -55,7 +55,7 @@ class AuthMiddleware implements MiddlewareInterface
         $this->session = $request->getAttribute($this->sessionAttribute);
         $userId = $this->session->getUserId();
         $userHash = $this->session->getUserHash();
-        $userAgent = $request->getServerParams()['HTTP_USER_AGENT'];
+        $userAgent = $this->getBrowser();
         $user = $this->validateUser($userAgent, $userId, $userHash);
         $request = $request->withAttribute($this->userAttribute, $user);
 
@@ -74,7 +74,7 @@ class AuthMiddleware implements MiddlewareInterface
     {
         $provider = new AuthProvider(route('login'), route('logout'));
         if ($userId !== null && $userHash !== null) {
-            $user = UserModel::row('*',['id='=> $userId, 'is_active=' => 1, 'AND']);
+            $user = UserModel::row('nama,email,nip,jabatan,instansi,tingkat,nomor_wa,role',['id='=> $userId, 'is_active=' => 1, 'AND']);
             if ($user) {
                 $hash = sha1($user['email'] . $userAgent);
                 if ($hash === $userHash) {
@@ -84,7 +84,7 @@ class AuthMiddleware implements MiddlewareInterface
                         foreach ($roles as $role){
                             $permissions = array_merge($permissions, config('permission.' . $role));
                         }
-                        unset($user['password']);
+                        unset($user['role']);
                         $user['is_internal'] = str_ends_with($user['email'], '@bps.go.id') ? true: false;
                         return new UserPrincipal($provider, new UserIdentity($userId, $roles, $permissions, $user));
                     }
@@ -95,5 +95,14 @@ class AuthMiddleware implements MiddlewareInterface
         }
 
         return new UserPrincipal($provider);
+    }
+    /**
+     * getBrowser
+     *
+     * @return string
+     */
+    private function getBrowser() : string
+    {
+        return $_SERVER['HTTP_USER_AGENT'] ?? 'N/A';
     }
 }

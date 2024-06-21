@@ -87,7 +87,7 @@
                                 }
                                 ?>
                                 <td width="auto"><?= $roleText ?></td>
-                                <td width="auto" class="text-center"><?= $row['is_active'] === 1 ? 'Ya' : 'Tidak' ?></td>
+                                <td width="auto" class="text-center"><?= $row['is_active'] == 1 ? 'Ya' : 'Tidak' ?></td>
                                 <td width="auto" class="text-center">
                                     <div>
                                         <!-- button view data -->
@@ -127,7 +127,7 @@
                                                             </svg><span class="ms-1">Batal</span>
                                                         </button>
                                                         <!-- button proses hapus data -->
-                                                        <a href="<?= route('admin_user_delete', base64_encode($row['email'])) ?>" class="btn btn-success btn-sm">
+                                                        <a href="<?= route('admin_user_delete', strval($row['id'])) ?>" class="btn btn-success btn-sm">
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                                                 <path transform="rotate(0,8,8) translate(2.38418749631819E-06,0) scale(0.500000357628124,0.500000357628124)" d="M28.166016,0L32,3.8740238 11.496002,19.745 0,7.9879777 4.4200134,4.6370251 12.070007,12.476016z" />
                                                             </svg><span class="ms-1">Ya</span>

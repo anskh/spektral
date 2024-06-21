@@ -6,6 +6,7 @@ namespace App\Helper;
 
 use Corephp\Helper\Service as BaseService;
 use Corephp\Http\Auth\UserPrincipalInterface;
+use PHPMailer\PHPMailer\PHPMailer;
 
 /**
  * Service
@@ -27,5 +28,24 @@ class Service extends BaseService
     public static function user(string $userAttribute = '__user'): UserPrincipalInterface
     {
         return static::$request->getAttribute($userAttribute);
+    }
+    /**
+     * mailer
+     *
+     * @param  bool $enableException
+     * @return PHPMailer
+     */
+    public static function mailer(bool $enableException = true): PHPMailer
+    {
+        $mailer             = new PHPMailer($enableException);
+        $mailer->isSMTP();
+        $mailer->Host       = config('smtp.host');
+        $mailer->SMTPAuth   = true;
+        $mailer->Username   = config('smtp.user');
+        $mailer->Password   = config('smtp.pass');
+        $mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mailer->Port       = config('smtp.port');
+        
+        return $mailer;
     }
 }

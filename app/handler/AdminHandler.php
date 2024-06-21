@@ -20,13 +20,14 @@ use App\Model\Forms\DokumentasiForm;
 use App\Model\Forms\EditTestimoniForm;
 use App\Model\Forms\EditUserForm;
 use App\Model\Forms\ModulForm;
+use App\Model\Forms\EmailForm;
 use App\Model\Forms\PembinaanMessageForm;
-use App\Model\Forms\TestimoniForm;
-use Corephp\Helper\Service;
+use App\Helper\Service;
 use Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
+use PHPMailer\PHPMailer\PHPMailer;
 
 class AdminHandler extends ActionHandler
 {
@@ -101,9 +102,15 @@ class AdminHandler extends ActionHandler
         }
 
         try {
-            $param = $request->getAttribute('param');
-            $email = base64_decode($param);
-            UserModel::delete(['email=' => $email]);
+            $id = $request->getAttribute('id');
+            ModulModel::update(['create_by' => null],['create_by=' => $id]);
+            ModulModel::update(['update_by' => null],['update_by=' => $id]);
+            TestimoniModel::delete(['userid=' => $id]);
+            PembinaanModel::update(['create_by' => null],['create_by=' => $id]);
+            PembinaanModel::update(['update_by' => null],['update_by=' => $id]);
+            DokumentasiPembinaanModel::update(['create_by' => null],['create_by=' => $id]);
+            DokumentasiPembinaanModel::update(['update_by' => null],['update_by=' => $id]);
+            UserModel::delete(['id=' => $id]);
             session()->addFlashSuccess('Hapus data pengguna berhasil.');
         } catch (Exception $e) {
             session()->addFlashError('Gagal hapus data pengguna.Error:' . $e->getMessage());
@@ -383,7 +390,7 @@ class AdminHandler extends ActionHandler
                             } else {
                                 try {
                                     $path = ROOT . '/uploads/modul/';
-                                    if (file_exists($path . $row['link'])) {
+                                    if ($row['link'] && is_file($path . $row['link'])) {
                                         unlink($path . $row['link']);
                                     }
                                     $filename = sprintf('%d.pdf', time());
@@ -453,10 +460,8 @@ class AdminHandler extends ActionHandler
             try {
                 $path = ROOT . '/uploads/modul/';
                 $filename = $data['link'] ?? null;
-                if ($filename) {
-                    if (file_exists($path . $filename)) {
-                        unlink($path . $filename);
-                    }
+                if ($filename && is_file($path . $filename)) {
+                    unlink($path . $filename);
                 }
                 ModulModel::delete(['id=' => $id]);
                 session()->addFlashSuccess('Hapus modul berhasil.');
@@ -597,14 +602,12 @@ class AdminHandler extends ActionHandler
         if ($row) {
             try {
                 $filename = $row['surat'] ?? null;
-                if ($filename) {
-                    $path = ROOT . '/uploads/pembinaan/';
-                    if (file_exists($path . $filename)) {
-                        unlink($path . $filename);
-                    }
+                $path = ROOT . '/uploads/pembinaan/';
+                if ($filename && is_file($path . $filename)) {
+                    unlink($path . $filename);
                 }
                 PembinaanMessageModel::delete(['pembinaan_id=' => $id]);
-                DokumentasiPembinaanModel::update(['pembinaan_id' => NULL], ['pembinaan_id' => $id]);
+                DokumentasiPembinaanModel::update(['pembinaan_id' => NULL], ['pembinaan_id=' => $id]);
                 PembinaanModel::delete(['id=' => $id]);
                 session()->addFlashSuccess('Hapus permintaan pembinaan berhasil.');
             } catch (Exception $e) {
@@ -808,7 +811,7 @@ class AdminHandler extends ActionHandler
                                 } else {
                                     try {
                                         $path = ROOT . '/uploads/dokumentasi/img/';
-                                        if ($model->gambar && file_exists($path . $model->gambar)) {
+                                        if ($model->gambar && is_file($path . $model->gambar)) {
                                             unlink($path . $model->gambar);
                                         }
                                         $model->gambar = sprintf("%d.{$fileExt}", time());
@@ -873,11 +876,9 @@ class AdminHandler extends ActionHandler
         if ($row) {
             try {
                 $filename = $row['gambar'] ?? null;
-                if ($filename) {
-                    $path = ROOT . '/uploads/dokumentasi/img/';
-                    if (file_exists($path . $filename)) {
-                        unlink($path . $filename);
-                    }
+                $path = ROOT . '/uploads/dokumentasi/img/';
+                if ($filename && is_file($path . $filename)) {
+                    unlink($path . $filename);
                 }
                 DokumentasiPembinaanModel::delete(['id=' => $id]);
                 session()->addFlashSuccess('Hapus dokumentasi pembinaan berhasil.');
@@ -1008,5 +1009,59 @@ class AdminHandler extends ActionHandler
         }
 
         return redirect_to('admin_testimoni');
+    }
+    /**
+     * Handle route 'admin_email' or path '/internal/email
+     *
+     * @param  mixed $request
+     * @param  mixed $response
+     * @return ResponseInterface
+     */
+    public function email(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        if (auth()->getIdentity()->isAuthenticated()) {
+            if (!auth()->hasRole(['supervisor', 'admin'])) {
+                return redirect_to('index');
+            }
+        } else {
+            return redirect_to('login');
+        }
+
+        $params = ['title' => 'KIRIM EMAIL | SPEKTRAL BACKEND'];
+        $params['page'] = 'KIRIM EMAIL';
+        $params['breadcrumbs'] = [];
+        $model = new EmailForm();
+        $model->server = config('smtp.host');
+        $model->user = config('smtp.user');
+        $model->password = config('smtp.pass');
+        $model->port = config('smtp.port');
+        
+        if ($request->getMethod() === 'POST') {
+            if ($model->fillAndValidateWith($request)) {
+                //Instantiation and passing `true` enables exceptions
+                $mail = Service::mailer(true);
+                try{
+                    $mail->setFrom('ipds1400@bps.go.id', 'Noreply SPEKTRAL BPS Provinsi Riau');
+                    $mail->addAddress($model->email);
+                    $mail->addReplyTo('bps1400@bps.go.id', 'Noreply SPEKTRAL BPS Provinsi Riau');
+
+                    //Set email format to HTML
+                    $mail->isHTML(true);
+                    $mail->Subject = 'SPEKTRAL BPS';
+                    $mail->Body    = '<p>Pesannya adalah: <b style="font-size: 30px;">' . $model->pesan . '</b></p>';
+         
+                    $mail->send();
+                    session()->addFlashSuccess('Kirim email sukses.');
+                }catch(Exception $e)
+                {
+                    session()->addFlashError("Kirim email gagal. Error: {$mail->ErrorInfo}");
+                }
+                
+                return redirect_to('admin_email');
+            }
+        }
+        $params['model'] = $model;
+
+        return view('admin_email', $params, $response, 'backend');
     }
 }

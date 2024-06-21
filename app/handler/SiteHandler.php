@@ -16,10 +16,11 @@ use App\Model\Db\PembinaanViewModel;
 use App\Model\Db\StatusPermintaanModel;
 use App\Model\Db\TestimoniModel;
 use App\Model\Db\TestimoniViewModel;
+use App\Model\Db\UserModel;
 use App\Model\Forms\PembinaanForm;
 use App\Model\Forms\PembinaanMessageForm;
 use App\Model\Forms\TestimoniForm;
-use Corephp\Helper\Service;
+use App\Helper\Service;
 use Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -149,13 +150,13 @@ class SiteHandler extends ActionHandler
         $params['page'] = 'PERMINTAAN PEMBINAAN STATISTIK';
         $params['breadcrumbs'] = [];
         $query = $request->getQueryParams();
+        $id = auth()->getIdentity()->getId();
         if (isset($query['q']) && $query['q']) {
             $q = esc($query['q']);
-            $id = auth()->getIdentity()->getId();
             $where = "`deskripsi` LIKE '%{$q}%' and `create_by`='{$id}'";
         } else {
             $q = null;
-            $where = ['create_by=' => auth()->getIdentity()->getId()];
+            $where = ['create_by=' => "$id"];
         }
         $params['q'] = $q;
         $params['data'] = PembinaanViewModel::paginate($where, '*');
@@ -190,29 +191,47 @@ class SiteHandler extends ActionHandler
         $model->produsen_data = 1; // set default as instansi produsen data
         if ($request->getMethod() === 'POST') {
             if ($model->fillAndValidateWith($request)) {
-                foreach ($request->getUploadedFiles() as $file) {
-                    if ($file instanceof UploadedFileInterface) {
-                        if ($file->getError() === UPLOAD_ERR_OK && $file->getSize() > 0) {
-                            $fileExt = strtolower(pathinfo($file->getClientFileName(), PATHINFO_EXTENSION));
-                            $allowd_file_ext = 'pdf';
-                            if ($file->getSize() > 8000000) { // 8 MB
-                                $model->addError("Ukuran file lebih dari 8MB.", 'link');
-                            } elseif ($fileExt !== $allowd_file_ext) {
-                                $model->addError("Tipe file harus pdf.", 'link');
-                            } else {
-                                try {
-                                    $model->surat = sprintf('%d.pdf', time());
-                                    $path = ROOT . '/uploads/pembinaan/';
-                                    $file->moveTo($path . $model->surat);
-                                } catch (Exception $e) {
-                                    $model->addError('Upload file surat pengantar gagal. Error:' . $e->getMessage(),  'link');
+                if($model->tanggal <= date("Y-m-d")){
+                    $model->addError("Tanggal harus lebih dari sekarang.", 'tanggal');
+                }else{
+                    foreach ($request->getUploadedFiles() as $file) {
+                        if ($file instanceof UploadedFileInterface) {
+                            if ($file->getError() === UPLOAD_ERR_OK && $file->getSize() > 0) {
+                                $fileExt = strtolower(pathinfo($file->getClientFileName(), PATHINFO_EXTENSION));
+                                $allowd_file_ext = 'pdf';
+                                if ($file->getSize() > 8000000) { // 8 MB
+                                    $model->addError("Ukuran file lebih dari 8MB.", 'link');
+                                } elseif ($fileExt !== $allowd_file_ext) {
+                                    $model->addError("Tipe file harus pdf.", 'link');
+                                } else {
+                                    try {
+                                        $model->surat = sprintf('%d.pdf', time());
+                                        $path = ROOT . '/uploads/pembinaan/';
+                                        $file->moveTo($path . $model->surat);
+                                    } catch (Exception $e) {
+                                        $model->addError('Upload file surat pengantar gagal. Error:' . $e->getMessage(),  'link');
+                                    }
                                 }
                             }
                         }
                     }
                 }
                 if (!$model->hasError() && $model->surat) {
+                    $mail = Service::mailer(true);
                     try {
+                        $mail->setFrom('ipds1400@bps.go.id', 'Noreply SPEKTRAL BPS Provinsi Riau');
+                        $mail->addAddress(auth()->getIdentity()->getData()['email']);
+                        $mail->addReplyTo('bps1400@bps.go.id', 'BPS Provinsi Riau');
+                        
+                        $mail->isHTML(true);
+                        $template = config('template.new_ticket');
+                        $mail->Subject = $template['subject'];
+                        $message = str_replace('%client_name%', auth()->getIdentity()->getData()['nama'] ?? 'Pengguna', $template['html_message']);
+                        $message = str_replace('%client_url%', base_url(route('pembinaan')), $message);
+                        $mail->Body    = $message;
+     
+                        $mail->send();
+                        
                         PembinaanModel::create(
                             [
                                 'produsen_data' => $model->produsen_data,
@@ -231,8 +250,26 @@ class SiteHandler extends ActionHandler
                             ]
                         );
                         session()->addFlashSuccess('Simpan permintaan pembinaan berhasil');
+                        
+                        $mail->clearAddresses();
+                        $super = UserModel::whereRole('supervisor');
+                        
+                        if($super){
+                         foreach($super as $address){
+                            $mail->addAddress($address);
+                         }
+                         $template = config('template.new_ticket_notification');
+                         $mail->Subject = $template['subject'];
+                         $message = str_replace('%client_url%', base_url(route('admin_pembinaan')), $template['html_message']);
+                         $mail->Body = $message;
+                        
+                         $mail->send();
+                        }
                     } catch (Exception $e) {
-                        session()->addFlashError('Simpan permintaan pembinaan gagal. Error:' . $e->getMessage());
+                        if($mail->ErrorInfo){
+                            session()->addFlashError("Terdapat kesalahan dalam pengiriman email. Error: {$mail->ErrorInfo}");
+                        }
+                        session()->addFlashError("Simpan permintaan pembinaan gagal");
                     }
                     return redirect_to('pembinaan');
                 }
@@ -289,25 +326,29 @@ class SiteHandler extends ActionHandler
             $data = Service::sanitize($request);
             $data['produsen_data'] = isset($data['produsen_data']) ? 1 : 0;
             if ($model->fillAndValidate($data)) {
-                foreach ($request->getUploadedFiles() as $file) {
-                    if ($file instanceof UploadedFileInterface) {
-                        if ($file->getError() === UPLOAD_ERR_OK && $file->getSize() > 0) {
-                            $fileExt = strtolower(pathinfo($file->getClientFileName(), PATHINFO_EXTENSION));
-                            $allowd_file_ext = 'pdf';
-                            if ($file->getSize() > 8000000) { // 8 MB
-                                $model->addError("Ukuran file lebih dari 8MB.", 'link');
-                            } elseif ($fileExt !== $allowd_file_ext) {
-                                $model->addError("Tipe file harus pdf.", 'link');
-                            } else {
-                                try {
-                                    $path = ROOT . '/uploads/pembinaan/';
-                                    if (file_exists($path . $model->surat)) {
-                                        unlink($path . $model->surat);
+                if($model->tanggal <= date("Y-m-d")){
+                    $model->addError("Tanggal harus lebih dari sekarang.", 'tanggal');
+                }else{
+                    foreach ($request->getUploadedFiles() as $file) {
+                        if ($file instanceof UploadedFileInterface) {
+                            if ($file->getError() === UPLOAD_ERR_OK && $file->getSize() > 0) {
+                                $fileExt = strtolower(pathinfo($file->getClientFileName(), PATHINFO_EXTENSION));
+                                $allowd_file_ext = 'pdf';
+                                if ($file->getSize() > 8000000) { // 8 MB
+                                    $model->addError("Ukuran file lebih dari 8MB.", 'link');
+                                } elseif ($fileExt !== $allowd_file_ext) {
+                                    $model->addError("Tipe file harus pdf.", 'link');
+                                } else {
+                                    try {
+                                        $path = ROOT . '/uploads/pembinaan/';
+                                        if ($model->surat && is_file($path . $model->surat)) {
+                                            unlink($path . $model->surat);
+                                        }
+                                        $model->surat = sprintf('%d.pdf', time());
+                                        $file->moveTo($path . $model->surat);
+                                    } catch (Exception $e) {
+                                        $model->addError('Upload file surat pengantar gagal. Error:' . $e->getMessage(),  'link');
                                     }
-                                    $model->surat = sprintf('%d.pdf', time());
-                                    $file->moveTo($path . $model->surat);
-                                } catch (Exception $e) {
-                                    $model->addError('Upload file surat pengantar gagal. Error:' . $e->getMessage(),  'link');
                                 }
                             }
                         }
@@ -432,19 +473,17 @@ class SiteHandler extends ActionHandler
         $row = PembinaanModel::row('*', ['id=' => $id]);
         if ($row) {
             $filename = $row['surat'] ?? null;
-            if ($filename) {
-                try {
-                    $path = ROOT . '/uploads/pembinaan/';
-                    if (file_exists($path . $filename)) {
-                        unlink($path . $filename);
-                    }
-                    PembinaanMessageModel::delete(['pembinaan_id=' => $id]);
-                    DokumentasiPembinaanModel::update(['pembinaan_id' => NULL], ['pembinaan_id' => $id]);
-                    PembinaanModel::delete(['id=' => $id]);
-                    session()->addFlashSuccess('Hapus permintaan pembinaan berhasil.');
-                } catch (Exception $e) {
-                    session()->addFlashError('Hapus permintaan pembinaan gagal. Error:' . $e->getMessage());
+            try {
+                $path = ROOT . '/uploads/pembinaan/';
+                if ($filename && is_file($path . $filename)) {
+                    unlink($path . $filename);
                 }
+                PembinaanMessageModel::delete(['pembinaan_id=' => $id]);
+                DokumentasiPembinaanModel::update(['pembinaan_id' => NULL], ['pembinaan_id=' => $id]);
+                PembinaanModel::delete(['id=' => $id]);
+                session()->addFlashSuccess('Hapus permintaan pembinaan berhasil.');
+            } catch (Exception $e) {
+                session()->addFlashError('Hapus permintaan pembinaan gagal. Error:' . $e->getMessage());
             }
         }
 

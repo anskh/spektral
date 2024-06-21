@@ -10,7 +10,7 @@ use App\Model\Forms\ResetForm;
 use App\Model\Forms\ResetPasswordForm;
 use App\Model\Db\UserModel;
 use App\Model\Forms\UserForm;
-use Corephp\Helper\Service;
+use App\Helper\Service;
 use Corephp\Helper\Token;
 use Exception;
 use Psr\Http\Message\ResponseInterface;
@@ -163,8 +163,24 @@ class AuthHandler extends ActionHandler
                 } else {
                     $row = UserModel::row('*', ['email=' => $model->email]);
                     if ($row) {
+                       $mail = Service::mailer(true);
                         try {
+                            $mail->setFrom('ipds1400@bps.go.id', 'Noreply SPEKTRAL BPS Provinsi Riau');
+                            $mail->addAddress($model->email);
+                            $mail->addReplyTo('bps1400@bps.go.id', 'BPS Provinsi Riau');
+                            
+                            $mail->isHTML(true);
+                            $template = config('template.reset_password');
+                            $mail->Subject = $template['subject'];
+                            $message = str_replace('%client_name%', $row['nama'], $template['html_message']);
                             $token = Token::generateMD5Token();
+                            $message = str_replace('%client_url%', base_url(route('reset_password', $token)), $message);
+                            $mail->Body    = $message;
+         
+                            $mail->send();
+                            
+                            session()->addFlashSuccess('Reset password berhasil. Link reset berhasil dikirimkan ke email.');
+                            
                             UserModel::update(
                                 [
                                     'reset_token' => $token,
@@ -172,35 +188,8 @@ class AuthHandler extends ActionHandler
                                 ],
                                 ['email=' => $model->email]
                             );
-
-                            $mail = Service::mail();
-                            $from = config('mail.from');
-                            $url = base_url(route('reset_password') . $token);
-                            $message = "From: \"Spektral\" <{$from}> " . PHP_EOL;
-                            $message .= "To: \"{$row['nama']}\" <{$model->email}>" . PHP_EOL;
-                            $message .= "Subject: Spektral - Reset Password" . PHP_EOL;
-                            $message .= "Date: " . rfc822_date() . PHP_EOL;
-                            $message .= "MIME-Version: 1.0" . PHP_EOL;
-                            $message .= "Content-Type: text/html; charset=utf-8" . PHP_EOL . PHP_EOL;
-                            $message .= "<html>" . PHP_EOL;
-                            $message .= "<body>" . PHP_EOL;
-                            $message .= "<p>Halo, <strong>{$row['nama']}</strong><p>";
-                            $message .= "<p>Terima kasih telah melakukan permintaan reset password di SPEKTRAL BPS Provinsi Riau.<br>";
-                            $message .= "Klik tautan di bawah ini untuk memasukkan password yang baru.<br>";
-                            $message .= "<a href=\"{$url}\" target=\"_blank\">Ubah Sekarang</a></p>";
-                            $message .= "<p>Badan Pusat Statistik Provinsi Riau<br>";
-                            $message .= "Jl. Pattimura No. 12, Pekanbaru.  Telp (62761) 23042<br>";
-                            $message .= "Email: <a href=\"mailto:bps1400@bps.go.id\">bps1400@bps.go.id</a></p>";
-                            $message .= "</body>" . PHP_EOL;
-                            $message .= "</html>";
-
-                            if ($mail->send($from, $model->email, $message)) {
-                                session()->addFlashSuccess('Reset password berhasil. Link reset berhasil dikirimkan ke email.');
-                            } else {
-                                session()->addFlashError('Link reset password gagal dikirimkan ke email.');
-                            }
                         } catch (Exception $e) {
-                            session()->addFlashError('Terjadi kesalahan kirim email : ' . $e->getMessage());
+                            session()->addFlashError("Kirim email gagal. Error: {$mail->ErrorInfo}");
                         }
                         return redirect_url(auth()->getProvider()->getLoginUri());
                     } else {
@@ -243,8 +232,25 @@ class AuthHandler extends ActionHandler
                     if ($row) {
                         $model->addError('Alamat email sudah digunakan, silahkan menggunakan alamat email lain.', 'email');
                     } else {
+                        $mail = Service::mailer(true);
                         try {
                             $token = Token::generateMD5Token();
+                            
+                            $mail->setFrom('ipds1400@bps.go.id', 'Noreply SPEKTRAL BPS Provinsi Riau');
+                            $mail->addAddress($model->email);
+                            $mail->addReplyTo('bps1400@bps.go.id', 'BPS Provinsi Riau');
+                            
+                            $mail->isHTML(true);
+                            $template = config('template.register');
+                            $mail->Subject = $template['subject'];
+                            $message = str_replace('%client_name%', $model->nama, $template['html_message']);
+                            $message = str_replace('%client_url%', base_url(route('activation', $token)), $message);
+                            $mail->Body    = $message;
+                            
+                            $mail->send();
+                            
+                            session()->addFlashSuccess('Daftar akun berhasil. Link aktivasi akun berhasil dikirimkan ke email.');
+                            
                             UserModel::create(
                                 [
                                     'email' => $model->email,
@@ -262,34 +268,8 @@ class AuthHandler extends ActionHandler
                                 ]
                             );
 
-                            $mail = Service::mail();
-                            $from = config('mail.from');
-                            $url = base_url(route('activation') . $token);
-                            $message = "From: \"Spektral\" <{$from}> " . PHP_EOL;
-                            $message .= "To: \"{$model->nama}\" <{$model->email}>" . PHP_EOL;
-                            $message .= "Subject: Spektral - Aktivasi Akun" . PHP_EOL;
-                            $message .= "Date: " . rfc822_date() . PHP_EOL;
-                            $message .= "MIME-Version: 1.0" . PHP_EOL;
-                            $message .= "Content-Type: text/html; charset=utf-8" . PHP_EOL . PHP_EOL;
-                            $message .= "<html>" . PHP_EOL;
-                            $message .= "<body>" . PHP_EOL;
-                            $message .= "<p>Halo, <strong>{$model->nama}</strong><br>";
-                            $message .= "Selamat datang di SPEKTRAL BPS Provinsi Riau. Terima kasih telah melakukan registrasi akun di SPEKTRAL BPS Provinsi Riau.<br>";
-                            $message .= "Klik tautan di bawah ini untuk memverifikasi akun email Anda untuk mendapatkan akses penuh pada SPEKTRAL BPS Provinsi Riau.<br>";
-                            $message .= "<a href=\"{$url}\" target=\"_blank\">Aktifkan Sekarang</a></p>";
-                            $message .= "<p>Terima kasih,<br>Badan Pusat Statistik Provinsi Riau<br>";
-                            $message .= "Jl. Pattimura No. 12, Pekanbaru.  Telp (62761) 23042<br>";
-                            $message .= "Email: <a href=\"mailto:bps1400@bps.go.id\">bps1400@bps.go.id</a></p>";
-                            $message .= "</body>" . PHP_EOL;
-                            $message .= "</html>";
-
-                            if ($mail->send($from, $model->email, $message)) {
-                                session()->addFlashSuccess('Daftar akun berhasil. Link aktivasi akun berhasil dikirimkan ke email.');
-                            } else {
-                                session()->addFlashError('Link aktivasi akun gagal dikirimkan ke email.');
-                            }
                         } catch (Exception $e) {
-                            session()->addFlashError('Terjadi kesalahan kirim email : ' . $e->getMessage());
+                            session()->addFlashError("Kirim email gagal. Error: {$mail->ErrorInfo}");
                         }
                         return redirect_url(auth()->getProvider()->getLoginUri());
                     }
@@ -369,13 +349,12 @@ class AuthHandler extends ActionHandler
                                         'create_at' => time()
                                     ]
                                 );
+                                $row = UserModel::row('*', ['email=' => $user->getEmail()]);
                             } catch (Exception $e) {
                                 session()->addFlashError('Gagal menambahkan akun internal secara otomatis. Error:' . $e->getMessage());
                             }
-                        } else {
-                            $row = UserModel::row('*', ['email=' => $user->getEmail()]);
                         }
-                        if($row['is_active'] == 0){
+                        if ($row['is_active'] == 0) {
                             session()->addFlashWarning('Status pengguna tidak aktif. Silahkan menghubungi admin untuk aktivasi.');
                             return redirect_url(auth()->getProvider()->getLoginUri());
                         }
@@ -387,9 +366,12 @@ class AuthHandler extends ActionHandler
                     } else {
                         session()->unset('oauth2state');
                         $provider = $this->getSSOProvider();
-                        $url_logout = $provider->getLogoutUrl();
-
-                        return redirect_url($url_logout);
+                        $logout_url = $provider->getLogoutUrl();
+                        $params = ['title' => 'LOGIN SSO | SPEKTRAL'];
+                        $params['page'] = 'LOGIN';
+                        $params['breadcrumbs'] = [];
+                        $params['logout_url'] = $logout_url;
+                        return view('auth_forbidden', $params, $response, 'frontend');
                     }
                 }
                 // echo "Nama : ".$user->getName();
@@ -422,12 +404,16 @@ class AuthHandler extends ActionHandler
      */
     private function getSSOProvider(): Keycloak
     {
+        $redirectUri = base_url(route('login_sso'));
+        if (CORE_ENVIRONMENT === 'production') {
+            $redirectUri = 'https://spektral.web.bps.go.id/auth/login-sso';
+        }
         return new Keycloak([
             'authServerUrl'         => 'https://sso.bps.go.id',
             'realm'                 => 'pegawai-bps',
-            'clientId'              => '11400-spektral-p0s',
-            'clientSecret'          => 'f03f924e-9f3e-4ab8-b3a3-f8ac906f2e80',
-            'redirectUri'           => base_url(route('login_sso'))
+            'clientId'              => 'xxx',
+            'clientSecret'          => 'xxx',
+            'redirectUri'           => $redirectUri
         ]);
     }
     /**
@@ -507,7 +493,7 @@ class AuthHandler extends ActionHandler
                     'jabatan' => $model->jabatan,
                     'update_at' => time()
                 ];
-                if($model->password){
+                if ($model->password) {
                     $data['password'] = password_hash($model->password, PASSWORD_BCRYPT);
                 }
                 try {

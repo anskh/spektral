@@ -16,8 +16,10 @@
         }
     ],
     "require": {
+        "php": ">=8.2",
         "anskh/corephp": "dev-main",
-        "irsadarief/jkd-sso": "^1.6"
+        "irsadarief/jkd-sso": "^1.6",
+        "phpmailer/phpmailer": "^6.9"
     },
     "scripts": {
         "post-update-cmd": "composer dump-autoload",

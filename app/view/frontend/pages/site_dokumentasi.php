@@ -1,7 +1,7 @@
 <?= $this->render('frontend/components/titlebox') ?>
 <div class="container mb-5">
     <div class="row">
-        <div class="col-md-12 col-lg-10 col-xl-8">
+        <div class="col">
             <a class="btn btn-success" data-bs-toggle="modal" data-bs-target="#filterModal">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                     <path transform="rotate(0,8,8) translate(2.38418749631819E-06,0) scale(0.500000357628124,0.500000357628124)" d="M0,0L29.2,0 17.399981,15 17.399981,26.800049 11.800019,32 11.800019,15z" />
@@ -54,7 +54,7 @@
         </div>
     <?php } ?>
     <div class="row mb-3">
-        <div class="col-md-12 col-lg-10 col-xl-8">
+        <div class="col">
             <?php
             $no = 1;
             foreach ($data->getRows() as $row) { ?>
@@ -73,7 +73,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-md-12 col-lg-10 col-xl-8">
+        <div class="col">
             <div class="d-flex justify-content-center"><span class="text-muted me-3">Menampilkan <?= $no > 1 ? 1 : 0 ?> sampai <?= $no - 1 ?> dari <?= $data->getPagination()->recordCount() ?></span>
                 <?= $data->getPagination() ?></div>
         </div>

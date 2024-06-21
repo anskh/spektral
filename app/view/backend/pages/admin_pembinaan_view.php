@@ -6,7 +6,7 @@
                 <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">
                     <button class="nav-link" id="nav-pendaftar-tab" data-bs-toggle="tab" data-bs-target="#nav-pendaftar" type="button" role="tab" aria-controls="nav-pendaftar" aria-selected="false">Informasi Pendaftar</button>
                     <button class="nav-link active" id="nav-pembinaan-tab" data-bs-toggle="tab" data-bs-target="#nav-pembinaan" type="button" role="tab" aria-controls="nav-pembinaan" aria-selected="true">Informasi Pembinaan</button>
-                    <button class="nav-link" id="nav-percakapan-tab" data-bs-toggle="tab" data-bs-target="#nav-percakapan" type="button" role="tab" aria-controls="nav-percakapan" aria-selected="false">Percakaan</button>
+                    <button class="nav-link" id="nav-percakapan-tab" data-bs-toggle="tab" data-bs-target="#nav-percakapan" type="button" role="tab" aria-controls="nav-percakapan" aria-selected="false">Percakapan</button>
                     <?php if (ticket_readonly($row['status'])) { ?>
                         <button class="nav-link" id="nav-dokumentasi-tab" data-bs-toggle="tab" data-bs-target="#nav-dokumentasi" type="button" role="tab" aria-controls="nav-dokumentasi" aria-selected="false">Dokumentasi</button>
                     <?php } ?>

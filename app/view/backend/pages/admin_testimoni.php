@@ -94,7 +94,7 @@
                                         } ?>
                                     </div>
                                 </td>
-                                <td width="auto" class="text-center"><?= $row['is_active'] === 1 ? 'Ya' : 'Tidak' ?></td>
+                                <td width="auto" class="text-center"><?= $row['is_active'] == 1 ? 'Ya' : 'Tidak' ?></td>
                                 <td class="text-center" width="100">
                                     <div>
                                         <!-- button ubah data -->

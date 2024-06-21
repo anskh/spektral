@@ -38,7 +38,7 @@ return [
 
     'admin_user' => ['GET','/internal/user', [AdminHandler::class, 'user']],
     'admin_user_view' => ['GET','/internal/user/view/{id:\d+}',[AdminHandler::class, 'viewUser']],
-    'admin_user_delete' => ['GET','/internal/user/delete/{param}',[AdminHandler::class, 'deleteUser']],
+    'admin_user_delete' => ['GET','/internal/user/delete/{id:\d+}',[AdminHandler::class, 'deleteUser']],
     'admin_user_edit' => [['GET','POST'],'/internal/user/edit/{id:\d+}',[AdminHandler::class, 'editUser']],
     'admin_user_info' => ['GET','/internal/account/info',[AdminHandler::class, 'infoUser']],
 
@@ -59,5 +59,7 @@ return [
 
     'admin_testimoni' => ['GET','/internal/testimoni',[AdminHandler::class, 'testimoni']],
     'admin_testimoni_edit' => [['GET','POST'],'/internal/testimoni/edit/{id:\d+}',[AdminHandler::class, 'editTestimoni']],
-    'admin_testimoni_delete' => [['GET','POST'],'/internal/testimoni/delete/{id:\d+}',[AdminHandler::class, 'deleteTestimoni']]
+    'admin_testimoni_delete' => [['GET','POST'],'/internal/testimoni/delete/{id:\d+}',[AdminHandler::class, 'deleteTestimoni']],
+    
+    //'admin_email' => [['GET','POST'],'/internal/email',[AdminHandler::class, 'email']]
 ];

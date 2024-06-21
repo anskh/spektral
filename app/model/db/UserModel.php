@@ -44,4 +44,15 @@ class UserModel extends DbModel
     {
         return db()->getTable('user');
     }
+    
+    /**
+     * whereRole
+     *
+     * @param  mixed $role
+     * @return array
+     */
+    public static function whereRole(string $role): array
+    {
+        return static::findColumn('`email`', "`role` LIKE '%{$role}%'");
+    }
 }

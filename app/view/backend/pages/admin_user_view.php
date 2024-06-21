@@ -48,7 +48,7 @@
             <div class="row mb-3">
                 <div class="col-lg-6">
                     <span class="text-muted">Status</span>
-                    <div><?= $row['is_active'] === 1 ? 'Aktif' : 'Tidak Aktif' ?></div>
+                    <div><?= $row['is_active'] == 1 ? 'Aktif' : 'Tidak Aktif' ?></div>
                 </div>
                 <?php
 

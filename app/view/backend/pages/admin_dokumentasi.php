@@ -80,7 +80,7 @@
                                 <td width="60" class="text-center"><?= $no++ ?></td>
                                 <td width="auto"><div><?= $row['judul'] ?></div></td>
                                 <td width="auto"><?= $row['tanggal'] ?></td>
-                                <td width="auto" class="text-center"><?= $row['is_active'] === 1 ? 'Ya' : 'Tidak' ?></td>
+                                <td width="auto" class="text-center"><?= $row['is_active'] == 1 ? 'Ya' : 'Tidak' ?></td>
                                 <td class="text-center" width="160">
                                     <div>
                                         <!-- button view data -->
